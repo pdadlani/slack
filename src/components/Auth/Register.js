@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import firebase from '../../firebase';
+import md5 from 'md5';
 import {
   Grid,
   Form,
@@ -18,8 +19,10 @@ function Register() {
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [usersRef, setUsersRef] = useState(firebase.database().ref('users'));
 
   const isFormValid = () => {
+    setErrors([]);
     let error;
     if (isFormEmpty(username, email, password, passwordConfirmation)) {
       error = { message: "You need to provide all fields."};
@@ -64,6 +67,7 @@ function Register() {
 
   const handleSubmit = event => {
     event.preventDefault();
+    setErrors([])
     if (isFormValid()) {
       setErrors([]);
       setLoading(true);
@@ -72,7 +76,20 @@ function Register() {
         .createUserWithEmailAndPassword(email, password)
         .then(createdUser => {
           console.log(createdUser);
-          setLoading(false);
+          createdUser.user.updateProfile({
+            displayName: username,
+            photoURL: `http://gravatar.com/avatar/${md5(createdUser.user.email)}?d=identicon`
+          })
+          .then(() => {
+            saveU(createdUser).then(() => {
+              console.log("user saved");
+            })
+          })
+          .catch(err => {
+            console.log(err);
+            setErrors(errors.concat(err));
+            setLoading(false);
+          })
         })
         .catch(err => {
           console.log(err);
@@ -82,6 +99,13 @@ function Register() {
     }
   }
 
+  const saveU = createdUser => {
+    return usersRef.child(createdUser.user.uid).set({
+      name: createdUser.user.displayName,
+      avatar: createdUser.user.photoURL
+    });
+  }
+
   const handleInputErrors = field => {
     return errors.some(error => error.message.toLowerCase().includes(field)) ? "error" : ""
   }
@@ -89,7 +113,7 @@ function Register() {
   return (
     <Grid textAlign="center" verticalAlign="middle" className="app">
       <Grid.Column style={{ maxWidth: 450 }}>
-        <Header as="h2" icon color="green" textAlign="center">
+        <Header as="h1" icon color="green" textAlign="center">
           <Icon name="puzzle piece" color="green" />
           Register for LDSlack
         </Header>
@@ -136,7 +160,7 @@ function Register() {
               placeholder="Password Confirmation"
               onChange={event => handleChange(event, "passwordConfirmation")}
               value={passwordConfirmation}
-              className={handleInputErrors("passwordConfirmation")}
+              className={handleInputErrors("password")}
               type="password"
             />
 
