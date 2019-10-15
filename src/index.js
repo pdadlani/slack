@@ -7,13 +7,23 @@ import Register from './components/Auth/Register';
 import Login from './components/Auth/Login';
 import firebase from './firebase';
 
+import { createStore } from 'redux';
+import { Provider, connect } from 'react-redux';
+import { composeWithDevTools } from 'redux-devtools-extension';
+
 import 'semantic-ui-css/semantic.min.css';
+import rootReducer from './reducers';
+import { setUser } from './actions';
+
+const store = createStore(rootReducer, composeWithDevTools());
 
 function Root(props) {
 
   useEffect(() => {
     firebase.auth().onAuthStateChanged(user => {
       if (user) {
+        console.log('user in index src', user);
+        props.setUser(user);
         props.history.push("/");
       }
     })
@@ -28,11 +38,13 @@ function Root(props) {
   )
 } 
 
-const RootWithAuth = withRouter(Root);
+const RootWithAuth = withRouter(connect(null, { setUser } )(Root));
 
 ReactDOM.render(
-  <Router>
-    <RootWithAuth />
-  </Router>,
+  <Provider store={store}>
+    <Router>
+      <RootWithAuth />
+    </Router>
+  </Provider>,
   document.getElementById("root")
 );
