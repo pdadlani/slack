@@ -1,12 +1,38 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Grid, Form, Segment, Button, Header, Message, Icon } from 'semantic-ui-react';
 import { Link } from 'react-router-dom';
+import firebase from '../../firebase.js';
 
-const handleChange = () => {
-  console.log('handle change')
-}
 
 const Register = () => {
+  const [user, setUser] = useState({
+    username: "",
+    email: "",
+    password: "",
+    passwordConfirmation: "",
+  });
+
+  const handleChange = (e) => {
+    console.log("handle change");
+    console.log(e.target.name)
+    console.log(e.target.value);
+    setUser({...user, [e.target.name]: e.target.value})
+    console.log(user)
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    firebase
+      .auth()
+      .createUserWithEmailAndPassword(user.email, user.password)
+      .then(createdUser => {
+        console.log(createdUser);
+      })
+      .catch(err => {
+        console.error(err);
+      });
+  };
+
   return (
     <Grid textAlign="center" verticalAlign="middle" className='app'>
       <Grid.Column style={{ maxWidth: 450 }}>
@@ -14,7 +40,7 @@ const Register = () => {
           <Icon name="puzzle piece" color="orange" />
           Register for NewSlack
         </Header>
-        <Form size="large">
+        <Form onSubmit={handleSubmit} size="large">
           <Segment stacked>
             <Form.Input
               fluid
@@ -22,7 +48,8 @@ const Register = () => {
               icon="user"
               iconPosition="left"
               placeholder="username"
-              onChange={handleChange()}
+              onChange={handleChange}
+              value={user.username}
               type="text"
             />
 
@@ -32,7 +59,8 @@ const Register = () => {
               icon="mail"
               iconPosition="left"
               placeholder="Email Address"
-              onChange={handleChange()}
+              onChange={handleChange}
+              value={user.email}
               type="email"
             />
 
@@ -42,7 +70,8 @@ const Register = () => {
               icon="lock"
               iconPosition="left"
               placeholder="Password"
-              onChange={handleChange()}
+              onChange={handleChange}
+              value={user.password}
               type="password"
             />
 
@@ -52,7 +81,8 @@ const Register = () => {
               icon="repeat"
               iconPosition="left"
               placeholder="Password Confirmation"
-              onChange={handleChange()}
+              onChange={handleChange}
+              value={user.passwordConfirmation}
               type="password"
             />
 
