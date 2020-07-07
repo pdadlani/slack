@@ -10,7 +10,44 @@ const Register = () => {
     email: "",
     password: "",
     passwordConfirmation: "",
+    errors: []
   });
+
+  const isFormEmpty = ({ username, email, password, passwordConfirmation }) => {
+    return !username.length || !email.length || !password.length || !passwordConfirmation.length;
+  }
+
+  const isFormValid = () => {
+    let errors = [];
+    let error;
+
+    if (isFormEmpty(user)) {
+      error = { message: 'Fill in all fields' };
+      setUser({ errors: errors.concat(error) });
+      return false;
+    } else if (!isPasswordValid(user)) {
+      // throw error
+      error = { message: 'Password is invalid.'};
+      setUser({ errors: errors.concat(error) });
+      return false;
+    } else {
+      return true;
+    };
+  };
+
+  const isPasswordValid = ({ password, passwordConfirmation }) => {
+    if (password.length < 6 || passwordConfirmation.length < 6) {
+      return false;
+    } else if (password !== passwordConfirmation) {
+      return false;
+    } else {
+      return true;
+    };
+  };
+
+  const displayErrors = errors => {
+    errors.map((error, i) => <p key={i}>{error.message}</p>)
+  }
 
   const handleChange = (e) => {
     console.log("handle change");
@@ -21,16 +58,18 @@ const Register = () => {
   };
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    firebase
-      .auth()
-      .createUserWithEmailAndPassword(user.email, user.password)
-      .then(createdUser => {
-        console.log(createdUser);
-      })
-      .catch(err => {
-        console.error(err);
-      });
+    if (isFormValid()) {
+      e.preventDefault();
+      firebase
+        .auth()
+        .createUserWithEmailAndPassword(user.email, user.password)
+        .then((createdUser) => {
+          console.log(createdUser);
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+    }
   };
 
   return (
@@ -89,6 +128,13 @@ const Register = () => {
             <Button color='orange' fluid size='large'>Submit</Button>
           </Segment>
         </Form>
+        {user.errors.length > 0 && (
+          <Message error>
+            <h3>Error</h3>
+            {user.errors.map((error, i) => <p key={i}>{error.message}</p> )}
+            {/* {displayErrors(user.errors)} */}
+          </Message>
+        )}
         <Message>Already a user? <Link to='/login'>Login</Link></Message>
       </Grid.Column>
     </Grid>
